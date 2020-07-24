@@ -24,9 +24,13 @@
 # Updated EfficientDetector class
 # Added detect_all method to DetectionTransformer class.
 #   def detect_all(self, input_image_dir, output_image_dir):
-
+#
 # This method detects objectes in each image in input_image_dir, and saves the detected image 
 # to output_image_dir.
+#
+# 2020/07/23 
+#  Updated inference.py and visualize/vis_utils.py to get detected_objects information
+#
     
 import sys
 import os
@@ -38,6 +42,7 @@ import PIL
 from PIL import Image
 import tensorflow.compat.v1 as tf
 import inference
+from FiltersParser import FiltersParser
 
 class EfficientDetector:
 
@@ -54,7 +59,7 @@ class EfficientDetector:
   # Detect objectes in each image in input_image_dir, and save the detected image 
   # to output_image_dir.
     
-  def detect_all(self, input_image_dir, output_image_dir):
+  def detect_all(self, filters, input_image_dir, output_image_dir):
       if not os.path.exists(input_image_dir):
           raise Exception("Not found input_image_dir {}".format(input_image_dir))
 
@@ -76,20 +81,10 @@ class EfficientDetector:
           
           print("filename {}".format(image_file_path))
           
-          out_image_file = self.detect(image_file_path, output_image_dir)
-          detected_image = Image.open(out_image_file) 
-
-          fname = get_filename_only(image_file_path)            
-          output_image_filename = os.path.join(output_image_dir, fname)
-
-          detected_image.save(output_image_filename)
-
-          print("output_image_filename {}".format(output_image_filename))
-          
+          predictions = self.detect(filters, image_file_path, output_image_dir)
 
 
-  def detect(self, input_image_filepath, output_image_dir="detected"):
-       
+  def detect(self, filters, input_image_filepath, output_image_dir="detected"):
       if not os.path.exists(input_image_filepath):
           raise Exception("Not found image_file {}".format(input_image_filepath)) 
       
@@ -111,7 +106,8 @@ class EfficientDetector:
       print("Start inference")
       start = time.time()
 
-      self.driver.inference(input_image_filepath,
+      predictions = self.driver.inference(filters, 
+                 input_image_filepath,
                  output_image_dir,
                  min_score_thresh  = self.min_score_thresh,
                  max_boxes_to_draw = self.max_boxes_to_draw,
@@ -119,70 +115,50 @@ class EfficientDetector:
       print("Done inference")
       elapsed_time = time.time() - start
       print("Elapsed_time:{0}".format(elapsed_time) + "[sec]")
-
-      out_image_file = os.path.join(output_image_dir, "0.jpg")
-      return out_image_file
+      return predictions
 
 
 
-def get_filename_only(input_image_filename):
-
-  rpos  = input_image_filename.rfind("/")
-  fname = input_image_filename
-
-  if rpos >0:
-      fname = input_image_filename[rpos+1:]
-  else:
-      rpos = input_image_filename.rfind("\\")
-      if rpos >0:
-         fname = input_image_filename[rpos+1:]
-  return fname
-  
-
-
-  
 ########################
 #
 if __name__=="__main__":
 
   try:
-  
-     if len(sys.argv) == 2:
-         # python EfficientDetector.py images/img.png
+     if len(sys.argv) < 3:
+        raise Exception("Usage: {} input_image_file output_image_dir filters".format(sys.argv[0]))
+        
+     input_image_file = None
+     input_image_dir  = None
+     output_image_dir = None
+     filters          = None  # classnames_list something like this "[person,car]"
+     
+     if len(sys.argv) >= 2:
+       input = sys.argv[1]
+       if not os.path.exists(input):
+         raise Exception("Not found input {}".format(input))
+       if os.path.isfile(input):
+         input_image_file = input
+       else:
+         input_image_dir  = input
 
-         input_image_filename = sys.argv[1]
-         output_image_dir = "detected"
+     if len(sys.argv) >= 3:
+       output_image_dir = sys.argv[2]
+       if not os.path.exists(output_image_dir):
+         os.makedirs(output_image_dir)
+     if len(sys.argv) == 4:
+       str_filters = sys.argv[3]
+       filtersParser = FiltersParser(str_filters)
+       filters = filtersParser.get_filters()
+       
+     if input_image_file is not None and output_image_dir is not None:
 
+         detector = EfficientDetector()
+         detector.detect(filters, input_image_file, output_image_dir)
+
+     if input_image_dir is not None and output_image_dir is not None:
          detector       = EfficientDetector()
-
-         out_image_file = detector.detect(input_image_filename, output_image_dir)
-
-         detected_image = Image.open(out_image_file) 
-         detected_image.show()
-         
-         abs_out  = os.path.join(os.getcwd(), output_image_dir)
-         if not os.path.exists(abs_out):
-             os.makedirs(abs_out)
-         
-         fname = get_filename_only(input_image_filename)
-         
-         output_image_filename = os.path.join(abs_out, fname)
-         detected_image = Image.open(out_image_file) 
-
-         detected_image.save(output_image_filename)
-
-
-     if len(sys.argv) ==3:
-         # python EfficientDetector.py image_input_dir image_out_dir
-
-         input_image_dir  = sys.argv[1]
-         output_image_dir = sys.argv[2]
+         detector.detect_all(filters, input_image_dir, output_image_dir)
   
-         detector       = EfficientDetector()
-
-         detector.detect_all(input_image_dir, output_image_dir)
-  
-      
   except Exception as ex:
     traceback.print_exc()
 

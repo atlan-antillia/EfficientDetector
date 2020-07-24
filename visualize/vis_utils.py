@@ -126,8 +126,10 @@ def encode_image_array_as_png_str(image):
   return png_string
 
 
-def draw_bounding_box_on_image_array(image,
-                                     id, #2020/07/22
+#2020/07/22 Added filters, id and detected_objects parameters
+def draw_bounding_box_on_image_array(filters,          #list of classes
+                                     image,
+                                     detected_objects, #list of detected_object attribute (id, label, score)
                                      ymin,
                                      xmin,
                                      ymax,
@@ -156,15 +158,19 @@ def draw_bounding_box_on_image_array(image,
       absolute.
   """
   image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
-  #2020/07/22 id
-  draw_bounding_box_on_image(image_pil, id, ymin, xmin, ymax, xmax, color,
+  draw_bounding_box_on_image(filters, 
+                             image_pil, 
+                             detected_objects,
+                             ymin, xmin, ymax, xmax, color,
                              thickness, display_str_list,
                              use_normalized_coordinates)
   np.copyto(image, np.array(image_pil))
 
 
-def draw_bounding_box_on_image(image,
-                               id, #202007/22
+#2020/07/22 Added filters, id and detected_objects parameters
+def draw_bounding_box_on_image(filters,
+                               image,
+                               detected_objects,
                                ymin,
                                xmin,
                                ymax,
@@ -204,11 +210,12 @@ def draw_bounding_box_on_image(image,
                                   ymin * im_height, ymax * im_height)
   else:
     (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-  if thickness > 0:
-    draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
-               (left, top)],
-              width=thickness,
-              fill=color)
+  
+  #if thickness > 0:
+  #  draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
+  #             (left, top)],
+  #            width=thickness,
+  #            fill=color)
   try:
     font = ImageFont.truetype('arial.ttf', 24)
   except IOError:
@@ -225,6 +232,7 @@ def draw_bounding_box_on_image(image,
     text_bottom = top
   else:
     text_bottom = bottom + total_display_str_height
+
   # Reverse list and print from bottom to top.
   for display_str in display_str_list[::-1]:
     
@@ -238,19 +246,48 @@ def draw_bounding_box_on_image(image,
     if len(sarray)>1:
       classname = sarray[0]
       score     = sarray[1]
-    print("{}  {} :{}".format(id, classname, score))
-    id += 1
-    #
     
-    draw.rectangle([(left, text_bottom - text_height - 2 * margin),
+    # check filters is None or not.
+    if filters is None:
+      id = len(detected_objects) +1
+      print("{}  {} :{}".format(id, classname, score))
+      detected_objects.append((id, classname, score))
+      if thickness > 0:
+        draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
+               (left, top)],
+              width=thickness,
+              fill=color)
+
+      draw.rectangle([(left, text_bottom - text_height - 2 * margin),
                     (left + text_width, text_bottom)],
                    fill=color)
-    draw.text((left + margin, text_bottom - text_height - margin),
+      draw.text((left + margin, text_bottom - text_height - margin),
               display_str,
               fill='black',
               font=font)
-    text_bottom -= text_height - 2 * margin
+      text_bottom -= text_height - 2 * margin
 
+    else:
+     if classname in filters:
+       id = len(detected_objects) +1
+       print("{}  {} :{}".format(id, classname, score))
+
+       detected_objects.append((id, classname, score))
+       if thickness > 0:
+         draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
+               (left, top)],
+              width=thickness,
+              fill=color)
+ 
+       draw.rectangle([(left, text_bottom - text_height - 2 * margin),
+                    (left + text_width, text_bottom)],
+                   fill=color)
+       draw.text((left + margin, text_bottom - text_height - margin),
+              display_str,
+              fill='black',
+              font=font)
+       text_bottom -= text_height - 2 * margin
+       
 
 def draw_bounding_boxes_on_image_array(image,
                                        boxes,
@@ -272,6 +309,8 @@ def draw_bounding_boxes_on_image_array(image,
   Raises:
     ValueError: if boxes is not a [N, 4] array
   """
+  print("===== draw_bounding_boxes_on_image_array")
+  
   image_pil = Image.fromarray(image)
   draw_bounding_boxes_on_image(image_pil, boxes, color, thickness,
                                display_str_list_list)
@@ -308,7 +347,7 @@ def draw_bounding_boxes_on_image(image,
     if display_str_list_list:
       display_str_list = display_str_list_list[i]
     print("=={} ".format(i))
-    draw_bounding_box_on_image(image, 0, boxes[i, 0], boxes[i, 1], boxes[i, 2],
+    draw_bounding_box_on_image(None, image, [], boxes[i, 0], boxes[i, 1], boxes[i, 2],
                                boxes[i, 3], color, thickness, display_str_list)
 
 
@@ -378,12 +417,13 @@ def create_visualization_fn(category_index,
       uint8 numpy array with shape (img_height, img_width, 3) with overlaid
       boxes.
     """
-    image = args[0]
-    boxes = args[1]
-    classes = args[2]
-    scores = args[3]
+    filters = args[0]
+    image   = args[1]
+    boxes   = args[2]
+    classes = args[3]
+    scores =  args[4]
     masks = keypoints = track_ids = None
-    pos_arg_ptr = 4  # Positional argument for first optional tensor (masks).
+    pos_arg_ptr = 5  # Positional argument for first optional tensor (masks).
     if include_masks:
       masks = args[pos_arg_ptr]
       pos_arg_ptr += 1
@@ -394,6 +434,7 @@ def create_visualization_fn(category_index,
       track_ids = args[pos_arg_ptr]
 
     return visualize_boxes_and_labels_on_image_array(
+        filters,
         image,
         boxes,
         classes,
@@ -779,6 +820,7 @@ def draw_mask_on_image_array(image, mask, color='red', alpha=0.4):
 
 
 def visualize_boxes_and_labels_on_image_array(
+    filters,
     image,
     boxes,
     classes,
@@ -903,7 +945,8 @@ def visualize_boxes_and_labels_on_image_array(
                                                   len(STANDARD_COLORS)]
 
   # Draw all boxes onto image.
-  id = 1
+  detected_objects = []
+  
   for box, color in box_to_color_map.items():
     ymin, xmin, ymax, xmax = box
     if instance_masks is not None:
@@ -913,8 +956,9 @@ def visualize_boxes_and_labels_on_image_array(
       draw_mask_on_image_array(
           image, box_to_instance_boundaries_map[box], color='red', alpha=1.0)
     draw_bounding_box_on_image_array(
+        filters,          #
         image,
-        id,  #2020/07/22
+        detected_objects, #
         ymin,
         xmin,
         ymax,
@@ -923,7 +967,6 @@ def visualize_boxes_and_labels_on_image_array(
         thickness=0 if skip_boxes else line_thickness,
         display_str_list=box_to_display_str_map[box],
         use_normalized_coordinates=use_normalized_coordinates)
-    id += 1 ##
     if keypoints is not None:
       draw_keypoints_on_image_array(
           image,
@@ -935,7 +978,8 @@ def visualize_boxes_and_labels_on_image_array(
           keypoint_edge_color=color,
           keypoint_edge_width=line_thickness // 2)
 
-  return image
+  #return image
+  return (image, detected_objects)
 
 
 def add_cdf_image_summary(values, name):
