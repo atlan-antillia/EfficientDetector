@@ -19,6 +19,7 @@
 # 
 # EfficientDet 
 # FiltersParser.py
+import os
 
 ## coco classes
 COCO_CLASSES = [
@@ -50,7 +51,7 @@ class FiltersParser:
       self.classes      = classes
       self.filters  = []
 
-      
+
   def get_filters(self):
       self.filters = []
       if self.str_filters != None:
@@ -65,7 +66,7 @@ class FiltersParser:
                     print("Invalid label(class)name {}".format(e))
       return self.filters
 
-
+  #2020/07/31 Updated 
   def get_ouput_filename(self, input_image_filename, image_out_dir):
         rpos  = input_image_filename.rfind("/")
         fname = input_image_filename
@@ -76,17 +77,16 @@ class FiltersParser:
             if rpos >0:
                 fname = input_image_filename[rpos+1:]
           
-        #print("Input filename {}".format(fname))
         
         abs_out  = os.path.abspath(image_out_dir)
         if not os.path.exists(abs_out):
             os.makedirs(abs_out)
 
         filname = ""
-        if self.str_filters != None:
-            filname = self.str_filters.strip('[]')
-            filname = filname.strip("'")
+        if self.str_filters is not None:
+            filname = self.str_filters.strip("[]").replace("'", "").replace(", ", "_")
             filname += "_"
-
+        
         output_image_filename = os.path.join(abs_out, filname + fname)
         return output_image_filename
+

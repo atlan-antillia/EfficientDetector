@@ -1,0 +1,235 @@
+# Copyright 2020 Google Research. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+#inference2.py
+# 2020/07/31 atlan
+# This is based on inference.py, and define Inference2 class and added some utilities functions to support filters. 
+# For example: def visualize_image_with_filters
+#
+r"""Inference related utilities."""
+
+from __future__ import absolute_import
+from __future__ import division
+# gtype import
+from __future__ import print_function
+
+import copy
+import functools
+import os
+import time
+from typing import Text, Dict, Any, List, Tuple, Union
+
+from absl import logging
+import numpy as np
+from PIL import Image
+import tensorflow.compat.v1 as tf
+import yaml
+import dataloader
+import det_model_fn
+import hparams_config
+import utils
+from keras import efficientdet_keras
+from keras import postprocess
+from vis_utils2 import *
+
+from tensorflow.python.client import timeline  # pylint: disable=g-direct-tensorflow-import
+import inference as inf
+from FiltersParser import *
+
+#2020/07/31 
+def visualize_image_with_filters(filters, # list something like [person, car]
+                    image,
+                    boxes,
+                    classes,
+                    scores,
+                    id_mapping=None,
+                    min_score_thresh=0.01,
+                    max_boxes_to_draw=1000,
+                    line_thickness=2,
+                    **kwargs):
+  """Visualizes a given image.
+
+  Args:
+    image: a image with shape [H, W, C].
+    boxes: a box prediction with shape [N, 4] ordered [ymin, xmin, ymax, xmax].
+    classes: a class prediction with shape [N].
+    scores: A list of float value with shape [N].
+    id_mapping: a dictionary from class id to name.
+    min_score_thresh: minimal score for showing. If claass probability is below
+      this threshold, then the object will not show up.
+    max_boxes_to_draw: maximum bounding box to draw.
+    line_thickness: how thick is the bounding box line.
+    **kwargs: extra parameters.
+
+  Returns:
+    output_image: an output image with annotated boxes and classes.
+  """
+  id_mapping = inf.parse_label_id_mapping(id_mapping)
+  category_index = {k: {'id': k, 'name': id_mapping[k]} for k in id_mapping}
+  img = np.array(image)
+  image, detected_objects = visualize_boxes_and_labels_on_image_array_with_filters(
+      filters, #
+      img,
+      boxes,
+      classes,
+      scores,
+      category_index,
+      min_score_thresh=min_score_thresh,
+      max_boxes_to_draw=max_boxes_to_draw,
+      line_thickness=line_thickness,
+      **kwargs)
+  #return img
+  return (img, detected_objects) 
+
+
+#2020/07/31 atlan
+
+def visualize_image_prediction_with_filters(filters, #list of classes
+                               image,
+                               prediction,
+                               label_id_mapping=None,
+                               **kwargs):
+  """Viusalize detections on a given image.
+
+  Args:
+    image: Image content in shape of [height, width, 3].
+    prediction: a list of vector, with each vector has the format of [image_id,
+      ymin, xmin, ymax, xmax, score, class].
+    label_id_mapping: a map from label id to name.
+    **kwargs: extra parameters for vistualization, such as min_score_thresh,
+      max_boxes_to_draw, and line_thickness.
+
+  Returns:
+    a list of annotated images.
+  """
+  boxes = prediction[:, 1:5]
+  classes = prediction[:, 6].astype(int)
+  scores = prediction[:, 5]
+  label_id_mapping = label_id_mapping or coco_id_mapping
+
+  return visualize_image_with_filters(filters, image, boxes, classes, scores, label_id_mapping,
+                         **kwargs)
+
+
+#2020/07/31 atlan
+class InferenceDriver2(object):
+  """A driver for doing batch inference.
+
+  Example usage:
+
+   driver = inference2.InferenceDriver2('efficientdet-d0', '/tmp/efficientdet-d0')
+   driver.inference('/tmp/*.jpg', '/tmp/outputdir')
+
+  """
+
+  def __init__(self,
+               model_name: Text,
+               ckpt_path: Text,
+               model_params: Dict[Text, Any] = None):
+    """Initialize the inference driver.
+
+    Args:
+      model_name: target model name, such as efficientdet-d0.
+      ckpt_path: checkpoint path, such as /tmp/efficientdet-d0/.
+      model_params: model parameters for overriding the config.
+    """
+    self.model_name = model_name
+    self.ckpt_path = ckpt_path
+    self.params = hparams_config.get_detection_config(model_name).as_dict()
+    if model_params:
+      self.params.update(model_params)
+    self.params.update(dict(is_training_bn=False))
+    
+    self.label_id_mapping = inf.parse_label_id_mapping(
+        self.params.get('label_id_mapping', None))
+
+
+  #2020/07/31 atlan
+  # filters: a list of classes to be selected, which can be used in post-processing stage after detection.
+  def inference(self, 
+           filters, 
+           image_path_pattern: Text, output_dir: Text, **kwargs):
+    """Read and preprocess input images.
+
+    Args:
+      image_path_pattern: Image file pattern such as /tmp/img*.jpg
+      output_dir: the directory for output images. Output images will be named
+        as 0.jpg, 1.jpg, ....
+      **kwargs: extra parameters for for vistualization, such as
+        min_score_thresh, max_boxes_to_draw, and line_thickness.
+
+    Returns:
+      Annotated image.
+    """
+    params = copy.deepcopy(self.params)
+    with tf.Session() as sess:
+      # Buid inputs and preprocessing.
+      basename = os.path.basename(image_path_pattern)
+      
+      
+      raw_images, images, scales = inf.build_inputs(image_path_pattern,
+                                                params['image_size'])
+      if params['data_format'] == 'channels_first':
+        images = tf.transpose(images, [0, 3, 1, 2])
+      # Build model by using inf.build_model
+      class_outputs, box_outputs = inf.build_model(self.model_name, images,
+                                               **self.params)
+      inf.restore_ckpt(
+          sess,
+          self.ckpt_path,
+          ema_decay=self.params['moving_average_decay'],
+          export_ckpt=None)
+      # Build postprocessing by using inf.def_post_process
+      detections_batch = inf.det_post_process(params, class_outputs, box_outputs,
+                                          scales)
+      predictions = sess.run(detections_batch)
+      # Visualize results.
+      for i, prediction in enumerate(predictions):
+        #2020/07/31 atlan
+        (img, detected_objects) = visualize_image_prediction_with_filters(
+            filters,
+            raw_images[i],
+            prediction,
+            label_id_mapping=self.label_id_mapping,
+            **kwargs)
+
+        filtersParser = FiltersParser(str(filters))
+        output_image_path = filtersParser.get_ouput_filename(image_path_pattern, output_dir)
+        if i > 0:
+          basename = os.path.basename(output_image_path)
+          ext      = os.path.splitext(output_image_path)
+          output_image_path = os.path.join(output_dir,  basename + '_' + str(i) + ext)
+          
+        print("==== output_image_path {}".format(output_image_path))
+          
+        Image.fromarray(img).save(output_image_path)
+        logging.info('writing file to %s', output_image_path)
+        
+        if i == 0:
+          detected_objects_path =  output_image_path + '.txt'
+        else:
+          detected_objects_path =  output_image_path + '_' + str(i) + '.txt'
+  
+        #2020/07/31 atlan
+        print("==== detected_objects_path {}".format(detected_objects_path))
+        with open(detected_objects_path, mode='w') as f:
+          for item in detected_objects:
+            (id, label, score) = item
+            line = str(id) + " " + str(label) + ": " + str(score) + "\n"
+            f.write(line)
+
+      return predictions
+      
+      

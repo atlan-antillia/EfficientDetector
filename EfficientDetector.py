@@ -37,21 +37,26 @@ import os
 import glob
 import time
 import traceback
+import matplotlib
+matplotlib.use('Agg')  # Set headless-friendly backend.
+import matplotlib.pyplot as plt  # pylint: disable=g-import-not-at-top
 import PIL
 
 from PIL import Image
 import tensorflow.compat.v1 as tf
-import inference
+#import inference 
+import inference2 
+
 from FiltersParser import FiltersParser
 
 class EfficientDetector:
 
-  def __init__(self):
+  def __init__(self, model="efficientdet-d0"):
       self.min_score_thresh  = 0.4  
       self.max_boxes_to_draw = 200  
       self.line_thickness    = 2
  
-      self.MODEL       = "efficientdet-d0"
+      self.MODEL       = model #"efficientdet-d0"
       self.ckpt_path   = os.path.join(os.getcwd(), self.MODEL)
 
 
@@ -99,7 +104,7 @@ class EfficientDetector:
 
       self.model_params= {"image_size": image_size}
 
-      self.driver = inference.InferenceDriver(self.MODEL, 
+      self.driver = inference2.InferenceDriver2(self.MODEL, 
                                               self.ckpt_path, 
                                  model_params=self.model_params) 
          
