@@ -15,6 +15,7 @@
 
 #inference2.py
 # 2020/07/31 atlan
+# 2020/08/15 atlan
 # This is based on inference.py, and define Inference2 class and added some utilities functions to support filters. 
 # For example: def visualize_image_with_filters
 #
@@ -48,7 +49,8 @@ from tensorflow.python.client import timeline  # pylint: disable=g-direct-tensor
 import inference as inf
 from FiltersParser import *
 
-#2020/07/31 
+#2020/07/31
+#2020/08/15 atlan 
 def visualize_image_with_filters(filters, # list something like [person, car]
                     image,
                     boxes,
@@ -79,7 +81,8 @@ def visualize_image_with_filters(filters, # list something like [person, car]
   id_mapping = inf.parse_label_id_mapping(id_mapping)
   category_index = {k: {'id': k, 'name': id_mapping[k]} for k in id_mapping}
   img = np.array(image)
-  image, detected_objects = visualize_boxes_and_labels_on_image_array_with_filters(
+  #2020/08/15 Modified to return objects_stats
+  (image, detected_objects, objects_stats) = visualize_boxes_and_labels_on_image_array_with_filters(
       filters, #
       img,
       boxes,
@@ -91,7 +94,7 @@ def visualize_image_with_filters(filters, # list something like [person, car]
       line_thickness=line_thickness,
       **kwargs)
   #return img
-  return (img, detected_objects) 
+  return (img, detected_objects, objects_stats) 
 
 
 #2020/07/31 atlan
@@ -197,14 +200,17 @@ class InferenceDriver2(object):
       predictions = sess.run(detections_batch)
       # Visualize results.
       for i, prediction in enumerate(predictions):
-        #2020/07/31 atlan
-        (img, detected_objects) = visualize_image_prediction_with_filters(
+        #2020/08/25 atlan objects_stats
+        (img, detected_objects, objects_stats) = visualize_image_prediction_with_filters(
             filters,
             raw_images[i],
             prediction,
             label_id_mapping=self.label_id_mapping,
             **kwargs)
-
+            
+        if filters is None:
+           filters = ""
+      
         filtersParser = FiltersParser(str(filters))
         output_image_path = filtersParser.get_ouput_filename(image_path_pattern, output_dir)
         if i > 0:
@@ -215,21 +221,36 @@ class InferenceDriver2(object):
         print("==== output_image_path {}".format(output_image_path))
           
         Image.fromarray(img).save(output_image_path)
-        logging.info('writing file to %s', output_image_path)
+        STATS = "_stats"
+        CSV   = ".csv"
         
+        logging.info('writing file to %s', output_image_path)
+        objects_stats_path = ""
         if i == 0:
-          detected_objects_path =  output_image_path + '.txt'
+          detected_objects_path =  output_image_path + CSV
+          objects_stats_path    = output_image_path + STATS + CSV
         else:
-          detected_objects_path =  output_image_path + '_' + str(i) + '.txt'
-  
-        #2020/07/31 atlan
+          #2020/08/15
+          detected_objects_path =  output_image_path + '_' + str(i) + CSV
+          objects_stats_path    = output_image_path + + '_' + str(i) + STATS + CSV
+
+        #2020/08/15 atlan: save the detected_objects as csv file
         print("==== detected_objects_path {}".format(detected_objects_path))
+        SEP = ", "
+        NL  = "\n"
         with open(detected_objects_path, mode='w') as f:
           for item in detected_objects:
-            (id, label, score) = item
-            line = str(id) + " " + str(label) + ": " + str(score) + "\n"
+            line = str(item).strip("()").replace("'", "") + NL
             f.write(line)
+       
+        #2020/08/15 atlan: save the detected_objects as csv file
+        print("==== objects_stats {}".format(objects_stats))
 
+        with open(objects_stats_path, mode='w') as s:
+          for (k,v) in enumerate(objects_stats.items()):
+            (name, value) = v
+            line = str(k +1) + SEP + str(name) + SEP + str(value) + NL
+            s.write(line)
+            
       return predictions
-      
-      
+

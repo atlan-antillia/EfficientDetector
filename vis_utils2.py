@@ -14,6 +14,7 @@
 # ==============================================================================
 
 # 2020/07/31 Based on visualize/vis_utils.py
+# 2020/08/15 Updated to suppoert objects_stats
 # vis_utils2.py
 
 """A set of functions that are used for visualization.
@@ -49,6 +50,7 @@ from visualize import standard_fields as fields
 def draw_bounding_box_on_image_array_with_filters(filters,          #list of classes
                                      image,
                                      detected_objects, #list of detected_object attribute (id, label, score)
+                                     objects_stats,    #
                                      ymin,
                                      xmin,
                                      ymax,
@@ -77,9 +79,10 @@ def draw_bounding_box_on_image_array_with_filters(filters,          #list of cla
       absolute.
   """
   image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
-  draw_bounding_box_on_image(filters, 
+  draw_bounding_box_on_image_with_filters(filters, 
                              image_pil, 
-                             detected_objects,
+                             detected_objects, 
+                             objects_stats,    #2020/08/15
                              ymin, xmin, ymax, xmax, color,
                              thickness, display_str_list,
                              use_normalized_coordinates)
@@ -90,6 +93,7 @@ def draw_bounding_box_on_image_array_with_filters(filters,          #list of cla
 def draw_bounding_box_on_image_with_filters(filters,
                                image,
                                detected_objects,
+                               objects_stats,    #2020/08/15
                                ymin,
                                xmin,
                                ymax,
@@ -169,8 +173,18 @@ def draw_bounding_box_on_image_with_filters(filters,
     # check filters is None or not.
     if filters is None:
       id = len(detected_objects) +1
-      print("{}  {} :{}".format(id, classname, score))
-      detected_objects.append((id, classname, score))
+      print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
+            int(left), int(top), int(right-left), int(bottom-top) ))
+      detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
+      # 2020/08/15
+      if classname not in objects_stats:
+         objects_stats[classname] = 1
+      else:
+        count = int(objects_stats[classname]) 
+        objects_stats.update({classname: count+1})
+      #print(objects_stats)
+      #  
+      
       if thickness > 0:
         draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
                (left, top)],
@@ -189,9 +203,19 @@ def draw_bounding_box_on_image_with_filters(filters,
     else:
      if classname in filters:
        id = len(detected_objects) +1
-       print("{}  {} :{}".format(id, classname, score))
+       print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
+            int(left), int(top), int(right-left), int(bottom-top) ))
+       detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
 
-       detected_objects.append((id, classname, score))
+       # 2020/08/15
+       if classname not in objects_stats:
+          objects_stats[classname] = 1
+       else:
+         count = int(objects_stats[classname]) 
+         objects_stats.update({classname: count+1})
+       #print(objects_stats)
+       #  
+       
        if thickness > 0:
          draw.line([(left, top), (left, bottom), (right, bottom), (right, top),
                (left, top)],
@@ -210,6 +234,8 @@ def draw_bounding_box_on_image_with_filters(filters,
 ####
 
 #2020/07/22 
+#2020/08/15 Returns objects_stats
+# (image, detected_objects, objects_stats)
 def visualize_boxes_and_labels_on_image_array_with_filters(
     filters,
     image,
@@ -336,9 +362,9 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
                                                   len(STANDARD_COLORS)]
 
   # Draw all boxes onto image.
-  #2020/07/22 
+  #2020/08/15 
   detected_objects = []
-  
+  objects_stats    = {}  
   for box, color in box_to_color_map.items():
     ymin, xmin, ymax, xmax = box
     if instance_masks is not None:
@@ -352,6 +378,7 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
         filters,          #
         image,
         detected_objects, #
+        objects_stats,    #2020/08/15
         ymin,
         xmin,
         ymax,
@@ -372,6 +399,6 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
           keypoint_edge_width=line_thickness // 2)
 
   #return image
-  #2020/07/22
-  return (image, detected_objects)
+  #2020/08/15
+  return (image, detected_objects, objects_stats)
 

@@ -85,7 +85,8 @@ class FiltersParser:
         filname = ""
         if self.str_filters is not None:
             filname = self.str_filters.strip("[]").replace("'", "").replace(", ", "_")
-            filname += "_"
+            if len(filname) != 0:
+              filname += "_"
         
         output_image_filename = os.path.join(abs_out, filname + fname)
         return output_image_filename
