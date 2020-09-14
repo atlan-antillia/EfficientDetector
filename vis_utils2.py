@@ -81,8 +81,8 @@ def draw_bounding_box_on_image_array_with_filters(filters,          #list of cla
   image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
   draw_bounding_box_on_image_with_filters(filters, 
                              image_pil, 
-                             detected_objects, 
-                             objects_stats,    #2020/08/15
+                             detected_objects, # in_out
+                             objects_stats,    # in_out 2020/08/15
                              ymin, xmin, ymax, xmax, color,
                              thickness, display_str_list,
                              use_normalized_coordinates)
@@ -92,8 +92,8 @@ def draw_bounding_box_on_image_array_with_filters(filters,          #list of cla
 #2020/07/22 Added filters, id and detected_objects parameters
 def draw_bounding_box_on_image_with_filters(filters,
                                image,
-                               detected_objects,
-                               objects_stats,    #2020/08/15
+                               detected_objects, # in_out
+                               objects_stats,    # in_out 2020/08/15
                                ymin,
                                xmin,
                                ymax,
@@ -173,6 +173,7 @@ def draw_bounding_box_on_image_with_filters(filters,
     # check filters is None or not.
     if filters is None:
       id = len(detected_objects) +1
+      # id, class, score, x, y, w, h
       print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
             int(left), int(top), int(right-left), int(bottom-top) ))
       detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
@@ -203,6 +204,7 @@ def draw_bounding_box_on_image_with_filters(filters,
     else:
      if classname in filters:
        id = len(detected_objects) +1
+       # id, class, score, x, y, w, h
        print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
             int(left), int(top), int(right-left), int(bottom-top) ))
        detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
@@ -375,10 +377,10 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
           image, box_to_instance_boundaries_map[box], color='red', alpha=1.0)
     #2020/07/22
     draw_bounding_box_on_image_array_with_filters(
-        filters,          #
+        filters,          # in
         image,
-        detected_objects, #
-        objects_stats,    #2020/08/15
+        detected_objects, # in_out
+        objects_stats,    # in_out 2020/08/15
         ymin,
         xmin,
         ymax,

@@ -16,6 +16,8 @@
 #inference2.py
 # 2020/07/31 atlan
 # 2020/08/15 atlan
+# 2020/09/15 atlan: Modified to write a header(title) line to a csv file.
+
 # This is based on inference.py, and define Inference2 class and added some utilities functions to support filters. 
 # For example: def visualize_image_with_filters
 #
@@ -160,7 +162,7 @@ class InferenceDriver2(object):
 
 
   #2020/07/31 atlan
-  # filters: a list of classes to be selected, which can be used in post-processing stage after detection.
+  # filters: a list of classes to be selected, which can be used in a post-processing stage after a detection process.
   def inference(self, 
            filters, 
            image_path_pattern: Text, output_dir: Text, **kwargs):
@@ -239,6 +241,10 @@ class InferenceDriver2(object):
         SEP = ", "
         NL  = "\n"
         with open(detected_objects_path, mode='w') as f:
+          #2020/09/15 Write a header(title) line of csv.
+          header = "id, class, score, x, y, w, h" + NL
+          f.write(header)
+
           for item in detected_objects:
             line = str(item).strip("()").replace("'", "") + NL
             f.write(line)
@@ -247,6 +253,10 @@ class InferenceDriver2(object):
         print("==== objects_stats {}".format(objects_stats))
 
         with open(objects_stats_path, mode='w') as s:
+          #2020/09/15 Write a header(title) line of csv.
+          header = "id, class, count" + NL
+          s.write(header)
+          
           for (k,v) in enumerate(objects_stats.items()):
             (name, value) = v
             line = str(k +1) + SEP + str(name) + SEP + str(value) + NL
