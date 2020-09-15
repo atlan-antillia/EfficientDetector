@@ -17,6 +17,7 @@
 # 2020/07/31 atlan
 # 2020/08/15 atlan
 # 2020/09/15 atlan: Modified to write a header(title) line to a csv file.
+# 2020/09/15 atlan: Modified to use keras label_util
 
 # This is based on inference.py, and define Inference2 class and added some utilities functions to support filters. 
 # For example: def visualize_image_with_filters
@@ -44,6 +45,9 @@ import det_model_fn
 import hparams_config
 import utils
 from keras import efficientdet_keras
+#2020/09/15
+from keras import label_util
+
 from keras import postprocess
 from vis_utils2 import *
 
@@ -58,7 +62,7 @@ def visualize_image_with_filters(filters, # list something like [person, car]
                     boxes,
                     classes,
                     scores,
-                    id_mapping=None,
+                    label_map=None, #2020/09/15
                     min_score_thresh=0.01,
                     max_boxes_to_draw=1000,
                     line_thickness=2,
@@ -80,8 +84,13 @@ def visualize_image_with_filters(filters, # list something like [person, car]
   Returns:
     output_image: an output image with annotated boxes and classes.
   """
-  id_mapping = inf.parse_label_id_mapping(id_mapping)
-  category_index = {k: {'id': k, 'name': id_mapping[k]} for k in id_mapping}
+  #id_mapping = inf.parse_label_id_mapping(id_mapping)
+  #2020/09/15
+  #id_mapping = id_mapping #inf.params.get('label_map', None)
+  label_map = label_util.get_label_map(label_map or 'coco')
+
+  #category_index = {k: {'id': k, 'name': id_mapping[k]} for k in id_mapping}
+  category_index = {k: {'id': k, 'name': label_map[k]} for k in label_map}
   img = np.array(image)
   #2020/08/15 Modified to return objects_stats
   (image, detected_objects, objects_stats) = visualize_boxes_and_labels_on_image_array_with_filters(
@@ -122,7 +131,7 @@ def visualize_image_prediction_with_filters(filters, #list of classes
   boxes = prediction[:, 1:5]
   classes = prediction[:, 6].astype(int)
   scores = prediction[:, 5]
-  label_id_mapping = label_id_mapping or coco_id_mapping
+  #label_id_mapping = label_id_mapping or coco_id_mapping
 
   return visualize_image_with_filters(filters, image, boxes, classes, scores, label_id_mapping,
                          **kwargs)
@@ -153,12 +162,16 @@ class InferenceDriver2(object):
     self.model_name = model_name
     self.ckpt_path = ckpt_path
     self.params = hparams_config.get_detection_config(model_name).as_dict()
+
     if model_params:
       self.params.update(model_params)
     self.params.update(dict(is_training_bn=False))
     
-    self.label_id_mapping = inf.parse_label_id_mapping(
-        self.params.get('label_id_mapping', None))
+    #2020/09/05
+    self.label_id_mapping = self.params.get('label_map', None)
+
+    #self.label_id_mapping = inf.parse_label_id_mapping(
+    #    self.params.get('label_id_mapping', None))
 
 
   #2020/07/31 atlan
