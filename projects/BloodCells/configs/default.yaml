@@ -1,0 +1,8 @@
+image_size: 416x416
+num_classes: 3
+label_map: {1: Platelets,2: RBC,3: WBC}
+input_rand_hflip: true
+jitter_min: 0.8
+jitter_max: 1.2
+learning_rate: 0.08
+

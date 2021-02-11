@@ -1,0 +1,15 @@
+item {
+    name: "Platelets",
+    id: 1,
+    display_name: "Platelets"
+}
+item {
+    name: "RBC",
+    id: 2,
+    display_name: "RBC"
+}
+item {
+    name: "WBC",
+    id: 3,
+    display_name: "WBC"
+}

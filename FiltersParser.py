@@ -44,15 +44,19 @@ class FiltersParser:
   # Specify a str_filters string like this "[person,motorcycle]" ,
   # If needed, please specify your own classes.
   # default classes = COCO_CLASSES
-  def __init__(self, str_filters, classes=COCO_CLASSES):
-      print("FiltersParser {}".format(str_filters))
+  def __init__(self, classes=COCO_CLASSES):
+      print("== FiltersParser ")
       
-      self.str_filters  = str_filters
+      self.str_filters  = None
       self.classes      = classes
       self.filters  = []
 
 
-  def get_filters(self):
+  def parse(self, filters):
+      self.str_filters = filters
+      if filters == None:
+        return filters
+        
       self.filters = []
       if self.str_filters != None:
           tmp = self.str_filters.strip('[]').split(',')

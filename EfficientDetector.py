@@ -30,6 +30,8 @@
 # 2020/07/23 
 #  Updated inference.py and visualize/vis_utils.py to get detected_objects information
 #
+# 2021/02/10 
+# Updated to use detect.config file.
     
 import sys
 import os
@@ -43,83 +45,85 @@ import PIL
 
 from PIL import Image
 import tensorflow.compat.v1 as tf
-#import inference 
 import inference2 
 
+#2021/2/10 Updated FiltersParser class.
 from FiltersParser import FiltersParser
 
+from DetectConfigParser import DetectConfigParser
+
 class EfficientDetector:
-
-  def __init__(self, model="efficientdet-d0"):
-      self.min_score_thresh  = 0.4  
-      self.max_boxes_to_draw = 200  
-      self.line_thickness    = 2
- 
-      self.MODEL       = model #"efficientdet-d0"
-      self.ckpt_path   = os.path.join(os.getcwd(), self.MODEL)
-
-
-  #2020/06/17
-  # Detect objectes in each image in input_image_dir, and save the detected image 
-  # to output_image_dir.
+  #Constructor
+  #
+  def __init__(self, detect_config):
+    self.parser            = DetectConfigParser(detect_config)
     
-  def detect_all(self, filters, input_image_dir, output_image_dir):
-      if not os.path.exists(input_image_dir):
-          raise Exception("Not found input_image_dir {}".format(input_image_dir))
+    self.min_score_thresh  = self.parser.threshold()  
+    self.max_boxes_to_draw = self.parser.max_boxes() 
+    self.line_thickness    = self.parser.line_thickness()
 
-      output_image_dir = os.path.join(os.getcwd(), output_image_dir)
-      if not os.path.exists(output_image_dir):
-          os.makedirs(output_image_dir)
+    self.model             = self.parser.model_name()
+    self.output_dir        = self.parser.output_dir()
+    self.ckpt_path         = self.parser.checkpoint_dir()
+    if not os.path.exists(self.output_dir):
+        os.makedirs(self.output_dir)
+
+    tf.enable_v2_tensorshape()
+    tf.disable_eager_execution()
+
+
+  def detect_all(self, input_image_dir, filters=None):
+    if not os.path.exists(input_image_dir):
+        raise Exception("Not found input_image_dir {}".format(input_image_dir))
+    
+    image_list = []
+
+    if os.path.isdir(input_image_dir):
+      image_list.extend(glob.glob(os.path.join(input_image_dir, "*.png")) )
+      image_list.extend(glob.glob(os.path.join(input_image_dir, "*.jpg")) )
+
+    print("image_list {}".format(image_list) )
+        
+    for image_filename in image_list:
+        #image_filename will take images/foo.png
+        image_file_path = os.path.abspath(image_filename)
+        
+        print("filename {}".format(image_file_path))
+        
+        self.detect(image_file_path, filters)
+
+
+  def detect(self, image_file, filters=None ):
+    if not os.path.exists(image_file):
+        raise Exception("Not found image_file " + image_file) 
+
+    filtersParser = FiltersParser()
+    filters = filtersParser.parse(filters)
+    print("=== {}".format(filters))
       
-      image_list = []
+    tf.reset_default_graph()
+    
+    image_size  = max(PIL.Image.open(image_file).size)
+    print("ImageSize {}".format(image_size))
 
-      if os.path.isdir(input_image_dir):
-        image_list.extend(glob.glob(os.path.join(input_image_dir, "*.png")) )
-        image_list.extend(glob.glob(os.path.join(input_image_dir, "*.jpg")) )
+    self.model_params= {"image_size": image_size}
 
-      print("image_list {}".format(image_list) )
-          
-      for image_filename in image_list:
-          #image_filename will take images/foo.png
-          image_file_path = os.path.abspath(image_filename)
-          
-          print("filename {}".format(image_file_path))
-          
-          predictions = self.detect(filters, image_file_path, output_image_dir)
+    self.driver = inference2.InferenceDriver2(self.model, 
+                            self.ckpt_path, 
+                            model_params=self.model_params) 
+       
+    print("Start inference")
+    start = time.time()
 
-
-  def detect(self, filters, input_image_filepath, output_image_dir="detected"):
-      if not os.path.exists(input_image_filepath):
-          raise Exception("Not found image_file {}".format(input_image_filepath)) 
-      
-      output_image_dir = os.path.join(os.getcwd(), output_image_dir)
-      if not os.path.exists(output_image_dir):
-          os.makedirs(output_image_dir)
-          
-      tf.reset_default_graph()
-      
-      image_size  = max(PIL.Image.open(input_image_filepath).size)
-      print("ImageSize {}".format(image_size))
-
-      self.model_params= {"image_size": image_size}
-
-      self.driver = inference2.InferenceDriver2(self.MODEL, 
-                                              self.ckpt_path, 
-                                 model_params=self.model_params) 
-         
-      print("Start inference")
-      start = time.time()
-
-      predictions = self.driver.inference(filters, 
-                 input_image_filepath,
-                 output_image_dir,
-                 min_score_thresh  = self.min_score_thresh,
-                 max_boxes_to_draw = self.max_boxes_to_draw,
-                 line_thickness    = self.line_thickness)
-      print("Done inference")
-      elapsed_time = time.time() - start
-      print("Elapsed_time:{0}".format(elapsed_time) + "[sec]")
-      return predictions
+    predictions = self.driver.inference(filters, 
+               image_file,
+               self.output_dir,
+               min_score_thresh  = self.min_score_thresh,
+               max_boxes_to_draw = self.max_boxes_to_draw,
+               line_thickness    = self.line_thickness)
+    print("Done inference")
+    elapsed_time = time.time() - start
+    print("Elapsed_time:{0}".format(elapsed_time) + "[sec]")
 
 
 
@@ -129,11 +133,12 @@ if __name__=="__main__":
 
   try:
      if len(sys.argv) < 3:
-        raise Exception("Usage: {} input_image_file output_image_dir filters".format(sys.argv[0]))
+        #python EfficientDetector.py images/img.png ./projects/coco/configs/detect.config [car,person]
+        raise Exception("Usage: {} image_file_or_dir detect.config filters".format(sys.argv[0]))
         
      input_image_file = None
      input_image_dir  = None
-     output_image_dir = None
+     detect_config    = None
      filters          = None  # classnames_list something like this "[person,car]"
      
      if len(sys.argv) >= 2:
@@ -146,22 +151,21 @@ if __name__=="__main__":
          input_image_dir  = input
 
      if len(sys.argv) >= 3:
-       output_image_dir = sys.argv[2]
-       if not os.path.exists(output_image_dir):
-         os.makedirs(output_image_dir)
+       detect_config = sys.argv[2]
+       if not os.path.exists(detect_config):
+         raise Exception("Not found " + detect_config)
+         
      if len(sys.argv) == 4:
-       str_filters = sys.argv[3]
-       filtersParser = FiltersParser(str_filters)
-       filters = filtersParser.get_filters()
+       filters = sys.argv[3]
+
+     detector = EfficientDetector(detect_config)
+
+     if input_image_dir is not None:
+         detector.detect_all(input_image_dir, filters )
        
-     if input_image_file is not None and output_image_dir is not None:
+     if input_image_file is not None:
+         detector.detect(input_image_file, filters)
 
-         detector = EfficientDetector()
-         detector.detect(filters, input_image_file, output_image_dir)
-
-     if input_image_dir is not None and output_image_dir is not None:
-         detector       = EfficientDetector()
-         detector.detect_all(filters, input_image_dir, output_image_dir)
   
   except Exception as ex:
     traceback.print_exc()
