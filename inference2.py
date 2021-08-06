@@ -196,9 +196,11 @@ class InferenceDriver2(object):
       # Buid inputs and preprocessing.
       basename = os.path.basename(image_path_pattern)
       
-      
+      # 2021/08/06 Updated the following build_inputs to add params['mean_rgb'],and params['stddev_rgb']
       raw_images, images, scales = inf.build_inputs(image_path_pattern,
-                                                params['image_size'])
+                                                params['image_size'],
+                                                params['mean_rgb'],
+                                                params['stddev_rgb'])
       if params['data_format'] == 'channels_first':
         images = tf.transpose(images, [0, 3, 1, 2])
       # Build model by using inf.build_model
