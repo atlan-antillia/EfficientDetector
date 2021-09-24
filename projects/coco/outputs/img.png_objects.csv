@@ -71,8 +71,8 @@ id, class, score, x, y, w, h
 70, motorcycle,  55%, 1334, 481, 38, 57
 71, person,  55%, 553, 705, 65, 123
 72, motorcycle,  55%, 1663, 319, 47, 45
-73, motorcycle,  53%, 755, 484, 32, 55
-74, motorcycle,  53%, 699, 536, 50, 65
+73, motorcycle,  53%, 699, 536, 50, 65
+74, motorcycle,  53%, 755, 484, 32, 55
 75, person,  53%, 690, 505, 30, 84
 76, person,  53%, 1604, 262, 25, 44
 77, motorcycle,  53%, 396, 747, 79, 135
