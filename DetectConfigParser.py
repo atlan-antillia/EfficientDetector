@@ -28,6 +28,7 @@ from DetectConfig import DetectConfig
 class DetectConfigParser(DetectConfig):
 
   def __init__(self, detect_config):
+    self.sfilters = ""
     self.detect_config = detect_config
     if not os.path.exists(self.detect_config):
       raise Exception("Not found " + self.detect_config)
@@ -44,89 +45,213 @@ class DetectConfigParser(DetectConfig):
     
     self.dump_all()
 
+  def runmode(self):
+    try:
+      return self.config[self.CONFIGURATION][self.RUNMODE]
+    except:
+      return "savedmodel_inference"
+      
   def model_name(self):
     try:
-      return self.config[self.DETECTION][self.MODEL_NAME]
+      return self.config[self.CONFIGURATION][self.MODEL_NAME]
     except:
       return "efficientdet-d0"
-      
+
   def log_dir(self):
     try:
-      return self.config[self.DETECTION][self.LOG_DIR]
+      return self.config[self.CONFIGURATION][self.LOG_DIR]
     except:
       return None
 
   def label_map_pbtxt(self):
     try:
-      return self.config[self.DETECTION][self.LABEL_MAP_PBTXT]
+      return self.config[self.CONFIGURATION][self.LABEL_MAP_PBTXT]
     except:
       return None
 
     
   def delete_logdir(self):
     try:
-      val = self.config[self.DETECTION][self.DELETE_LOGDIR]
-      return self.symbolize_if_possible(val)
+      return eval(self.config[self.CONFIGURATION][self.DELETE_LOGDIR])
     except:
       return False
     
 
   def batch_size(self):
     try:
-      return int(self.config[self.DETECTION][self.BATCH_SIZE])
+      return int(self.config[self.CONFIGURATION][self.BATCH_SIZE])
     except:
       return 1
 
-  def checkpoint_dir(self):
+  def ckpt_dir(self):
     try:
-      return self.config[self.DETECTION][self.CHECKPOINT_DIR]
+      return self.config[self.CONFIGURATION][self.CKPT_DIR]
     except:
       return None
        
-  def savedmodel_dir(self):
+  def saved_model_dir(self):
     try:
-      return self.config[self.DETECTION][self.SAVEDMODEL_DIR]
+      return self.config[self.CONFIGURATION][self.SAVED_MODEL_DIR]
     except:
       return None
 
-  def hparams(self):
+  def use_xla(self):
     try:
-      return self.config[self.DETECTION][self.HPARAMS]
+      return eval(self.config[self.CONFIGURATION][self.USE_XLA])
+    except:
+      return False
+
+  def tflite_path(self):
+    try:
+      return self.config[self.CONFIGURATION][self.TFLITE_PATH]
+    except:
+      return None
+      
+  def export_ckpt(self):
+    try:
+      return self.config[self.CONFIGURATION][self.EXPORT_CKPT]
     except:
       return None
   
-  def output_dir(self):
+  def hparams(self):
+    try: 
+      val = self.config[self.CONFIGURATION][self.HPARAMS]
+      if val == 'None':
+        return None
+      return val
+    except:
+      return None
+
+  def score_thresh(self):
     try:
-      return self.config[self.DETECTION][self.OUTPUT_DIR]
+      return float(self.config[self.CONFIGURATION][self.SCORE_THRESH])
+    except:
+      return 0.4
+
+  def tensorrt(self):
+    try:
+      return eval(self.config[self.CONFIGURATION][self.TENSORRT])
+    except:
+      return False
+
+  def output_image_dir(self):
+    try:
+      return self.config[self.CONFIGURATION][self.OUTPUT_IMAGE_DIR]
     except Exception as ex:
       return None
   
+  def input_image(self):
+    try:
+      return self.config[self.CONFIGURATION][self.INPUT_IMAGE]
+    except Exception as ex:
+      return None
   
-  # VISUALIZATION
+  def freeze(self):
+    try:
+      return eval(self.config[self.CONFIGURATION][self.FREEZE])
+  
+    except Excetion as ex:
+      return False
+    	
+  def str_filters(self):
+    return self.sfilters
+
+  def filters(self):
+    try:
+      self.sfilters = ""
+      str_filters = self.config[self.CONFIGURATION][self.FILTERS]
+      if str_filters == "None":
+        return None
+      self.sfilters = str_filters
+
+      self._filters = []
+      if str_filters != None:
+          tmp = str_filters.strip('[]').split(',')
+          if len(tmp) > 0:
+              for e in tmp:
+                  e = e.lstrip()
+                  e = e.rstrip()
+                  self._filters.append(e)
+
+                  """
+                  if e in self.classes :
+                    self.filters.append(e)
+                  else:
+                    print("Invalid label(class)name {}".format(e))
+                  """              
+      return self._filters
+
+    except Exception as ex:
+      return None
+
+  # CONFIGURATION
+  def output_image_dir(self):
+    try:
+      return self.config[self.CONFIGURATION][self.OUTPUT_IMAGE_DIR]
+    except:
+      return None
+
+  def input_video(self):
+    try:
+      return self.config[self.CONFIGURATION][self.INPUT_VIDEO]
+    except:
+      return None
+
+  def output_video(self):
+    try:
+      return self.config[self.CONFIGURATION][self.INPUT_VIDEO]
+    except:
+      return None
+
+  # CONFIGURATION
   def line_thickness(self):
     try:
-      return int(self.config[self.VISUALIZATION][self.OUTPUT_VIDEO])
+      return int(self.config[self.CONFIGURATION][self.LINE_THICKNESS])
     except:
       return 2
-  
-  def max_boxes(self):
+
+  def max_output_size(self):
     try:
-      return int(self.config[self.VISUALIZATION][self.MAX_BOXES])
+      return int(self.config[self.CONFIGURATION][self.MAX_OUTPUT_SIZE])
     except:
-      return 2
-  
-  def threshold(self):
+      return 100
+
+  def max_boxes_to_draw(self):
     try:
-      return float(self.config[self.VISUALIZATION][self.THRESHOLD])
+      return int(self.config[self.CONFIGURATION][self.MAX_BOXES_TO_DRAW])
+    except:
+      return 100
+  
+  def min_score_thresh(self):
+    try:
+      return float(self.config[self.CONFIGURATION][self.MIN_SCORE_THRESH])
     except:
       return 0.4
 
   def nms_method(self):
     try:
-      return self.config[self.VISUALIZATION][self.NMS_METHOD]
+      return self.config[self.CONFIGURATION][self.NMS_METHOD]
     except:
       return "hard"
   
+  def bm_runs(self):
+    try:
+      return int(self.config[self.CONFIGURATION][self.BM_RUNS])
+    except:
+      return 10
+
+  def threads(self):
+    try:
+      return int(self.config[self.CONFIGURATION][self.THREADS])
+    except:
+      return 1
+
+  def trace_filename(self):
+    try:
+      return self.config[self.CONFIGURATION][self.TRACE_FILENAME]
+    except:
+      return None
+
   def dump_all(self):
       
     print("model_name           {}".format(self.model_name() ))
@@ -139,27 +264,29 @@ class DetectConfigParser(DetectConfig):
 
     print("batch_size           {}".format(self.batch_size() ))
 
-    print("checkpoint_dir       {}".format(self.checkpoint_dir() ))
+    print("ckpt_dir             {}".format(self.ckpt_dir() ))
     
-    print("savedmodel_dir       {}".format(self.savedmodel_dir() ))
+    print("saved_model_dir       {}".format(self.saved_model_dir() ))
 
     print("hparams              {}".format(self.hparams() ))
     
-    print("output_dir           {}".format(self.output_dir() ))
+    print("output_image_dir     {}".format(self.output_image_dir() ))
 
     print("line_thickness       {}".format(self.line_thickness() ))
  
-    print("max_boxes            {}".format(self.max_boxes() ))
+    print("max_boxes_to_draw    {}".format(self.max_boxes_to_draw() ))
 
-    print("threshold            {}".format(self.threshold() ))
+    print("str_fiters            {}".format(self.str_filters() ))
 
     print("nms_method           {}".format(self.nms_method() ))
+
+    print("filters              {}".format(self.filters() ))
 
 
 if __name__ == "__main__":
   try:
     detect_config = "./projects/BloodCells/configs/detect.config"
-    parser = InspectConfigParser(detect_config)
+    parser = DetectConfigParser(detect_config)
     
   except Exception as ex:
     traceback.print_exc()

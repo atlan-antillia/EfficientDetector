@@ -1,0 +1,58 @@
+;./project/BloodCells/train-d1.config
+[project]
+name        = BloodCells
+owner       = {OWNER}
+dataset     = BloodCells
+
+[hardware]
+tpu         = None
+tpu_zone    = None
+gcp_project = None
+strategy    = None 
+use_xla     = False
+
+[model]
+name        = efficientdet-d1
+model_dir   = ./projects/BloodCells/models-d1/
+profile     = None
+ckpt        = ./efficientdet-d1
+
+[training]
+mode                      = train_and_eval
+run_epoch_in_child_process= False
+batch_size                = 8
+epochs                    = 100
+save_checkpoints_steps    = 100
+file_pattern              = ./projects/BloodCells/train/cells.tfrecord
+
+examples_per_epoch        = 200
+hparams                   = ./projects/BloodCells/configs/default.yaml
+cores                     = 0
+use_spatial_partition     = False
+
+cores_per_replica         = 2
+input_partition_dims      = [1, 2, 1, 1]
+tf_random_seed            = False
+use_fake_data             = False
+training_losses_file      = ./projects/BloodCells/train_losses.csv
+
+[validation]
+file_pattern            = ./projects/BloodCells/valid/cells.tfrecord
+batch_size              = 1
+eval_samples            = 1000
+iterations_per_loop     = 100
+val_json_file           = None
+eval_after_train        = True
+min_eval_interval       = 180
+timeout                 = None
+evaluation_results_file = ./projects/BloodCells/eval_results.csv
+
+[early_stopping]
+patience   = 6
+
+[epoch_change_notifier]
+enabled   = True
+ipaddress = 127.0.0.1
+port      = 9999
+
+

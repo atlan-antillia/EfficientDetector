@@ -78,6 +78,7 @@ def draw_bounding_box_on_image_array_with_filters(filters,          #list of cla
       ymax, xmax as relative to the image.  Otherwise treat coordinates as
       absolute.
   """
+  #print("--- draw_bounding_box_on_image_array_with_filters")
   image_pil = Image.fromarray(np.uint8(image)).convert('RGB')
   draw_bounding_box_on_image_with_filters(filters, 
                              image_pil, 
@@ -126,6 +127,7 @@ def draw_bounding_box_on_image_with_filters(filters,
       ymax, xmax as relative to the image.  Otherwise treat coordinates as
       absolute.
   """
+  #print("--- draw_bounding_box_on_image_with_filters")
   draw = ImageDraw.Draw(image)
   im_width, im_height = image.size
   if use_normalized_coordinates:
@@ -171,11 +173,12 @@ def draw_bounding_box_on_image_with_filters(filters,
       score     = sarray[1]
     
     # check filters is None or not.
-    if filters is None:
+    if filters is None or filters == "" or filters == "None":
+      #print("----------filters is None")
       id = len(detected_objects) +1
       # id, class, score, x, y, w, h
-      print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
-            int(left), int(top), int(right-left), int(bottom-top) ))
+      #print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
+      #      int(left), int(top), int(right-left), int(bottom-top) ))
       detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
       # 2020/08/15
       if classname not in objects_stats:
@@ -205,8 +208,8 @@ def draw_bounding_box_on_image_with_filters(filters,
      if classname in filters:
        id = len(detected_objects) +1
        # id, class, score, x, y, w, h
-       print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
-            int(left), int(top), int(right-left), int(bottom-top) ))
+       #print("{},  {}, {}, {}, {}, {}, {}".format(id, classname, score, 
+       #     int(left), int(top), int(right-left), int(bottom-top) ))
        detected_objects.append((id, classname, score, int(left), int(top), int(right-left), int(bottom-top) ))
 
        # 2020/08/15
@@ -307,6 +310,7 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
   Returns:
     uint8 numpy array with shape (img_height, img_width, 3) with overlaid boxes.
   """
+  #print("--- vis_utils2  visualize_boxes_and_labels_on_image_array_with_filters")
   # Create a display string (and color) for every box location, group any boxes
   # that correspond to the same location.
   box_to_display_str_map = collections.defaultdict(list)
@@ -376,6 +380,8 @@ def visualize_boxes_and_labels_on_image_array_with_filters(
       draw_mask_on_image_array(
           image, box_to_instance_boundaries_map[box], color='red', alpha=1.0)
     #2020/07/22
+    #print("---  draw_bounding_box_on_image_array_with_filters")
+    #print(" xmin {} ymin {} xmax {} ymax {} color {}".format(xmin, ymin, xmax, ymax, color))
     draw_bounding_box_on_image_array_with_filters(
         filters,          # in
         image,

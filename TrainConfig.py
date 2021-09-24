@@ -43,7 +43,8 @@ class TrainConfig:
   MODEL               = "model"
   NAME                = "name"
   MODEL_DIR           = "model_dir"
-  CHECKPOINT          = "checkpoint"
+ 
+  CKPT                = "ckpt"
   BACKBONE_CHECKPOINT = "backbone_checkpoint"
   PROFILE             = "profile"
   MODE                = "mode"

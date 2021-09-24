@@ -25,12 +25,14 @@ class mAPEarlyStopping():
       self.patience = patience
       self.verbose  = verbose
 
-  def validate(self, mAP):
+  def validate(self, e, mAP):
        
       if self._mAP > mAP:
           #Not increasing mAP
           self._step += 1
-          print("=== mAPEarlyStopping step:{} prev mAP:{} > new mAP: {}".format(self._step, self._mAP, mAP))
+          print("=== mAPEarlyStopping epoch:{} step:{} prev mAP:{} > new mAP: {}".format(e, self._step,   
+             round(self._mAP,4),
+             round( mAP, 4) ))
           
           if self._step > self.patience:
               if self.verbose:
@@ -38,7 +40,9 @@ class mAPEarlyStopping():
               return True
       else:
           # self._mAP <= mAP
-          print("=== mAPEarlyStopping step:{} prev mAP:{} <= new mAP:{}".format(self._step, self._mAP, mAP))
+          print("=== mAPEarlyStopping epoch:{} step:{} prev mAP:{} <= new mAP:{}".format(e, self._step, 
+           round(self._mAP, 4),
+           round(mAP,4) ))
 
           self._step = 0
           self._mAP = mAP

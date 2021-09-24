@@ -38,15 +38,17 @@ class TrainConfigParser(TrainConfig):
 
     try:
       self.parse(train_config_path)
+      self.dump_all()
     except Exception as ex:
+      print("==== TrainConfigParser Exception -----------------------{}".format(ex))
+      
       traceback.print_exc()
 
 
   def parse(self, train_config_path):
     self.config = configparser.ConfigParser()
     self.config.read(train_config_path)
-    self.dump_all()
-
+      
 
   def project_name(self):
     try:
@@ -152,9 +154,9 @@ class TrainConfigParser(TrainConfig):
   """
   'Start training from this EfficientDet checkpoint.'
   """    
-  def checkpoint(self):
+  def ckpt(self):
     try:
-      val = self.config[self.MODEL][self.CHECKPOINT]
+      val = self.config[self.MODEL][self.CKPT]
       return self.parse_if_possible(val)
     except:
       return None
@@ -162,7 +164,7 @@ class TrainConfigParser(TrainConfig):
   """
   'Start training from this EfficientDet checkpoint.'
   """    
-  def backbone_checkpoint(self):
+  def backbone_ckpt(self):
     try:
       val = self.config[self.MODEL][self.BACKBONE_CHECKPOINT]
       return self.parse_if_possible(val)
@@ -176,7 +178,8 @@ class TrainConfigParser(TrainConfig):
     except:
       return None
 
-  def training_mode(self):
+  #2021/09/13
+  def mode(self):
     try:
       return self.config[self.TRAINING][self.MODE]
     except:
@@ -190,14 +193,14 @@ class TrainConfigParser(TrainConfig):
 
   # 'global training batch size'
 
-  def training_batch_size(self):
+  def train_batch_size(self):
     try:
       return int(self.config[self.TRAINING][self.BATCH_SIZE])
     except:
       return 1
       
   ###
-  def epochs(self):
+  def num_epochs(self):
     try:
       return int(self.config[self.TRAINING][self.EPOCHS])
     except:
@@ -223,7 +226,7 @@ class TrainConfigParser(TrainConfig):
       return 1
     
 
-  def training_file_pattern(self):
+  def train_file_pattern(self):
     try:
       return self.config[self.TRAINING][self.FILE_PATTERN]
     except:
@@ -277,7 +280,7 @@ class TrainConfigParser(TrainConfig):
       pass
     return rc
 
-  def cores_per_replica(self):
+  def num_cores_per_replica(self):
     try:
       return int(self.config[self.TRAINING][self.CORES_PER_REPLICA])
     except:
@@ -312,7 +315,7 @@ class TrainConfigParser(TrainConfig):
   """
   'Glob for evaluation tfrecords (e.g., COCO val2017 set)'
   """
-  def validation_file_pattern(self):
+  def val_file_pattern(self):
     try:
       return self.config[self.VALIDATION][self.FILE_PATTERN]
     except:
@@ -321,7 +324,9 @@ class TrainConfigParser(TrainConfig):
   """
   'global evaluation batch size'
   """
-  def validation_batch_size(self):
+
+  def eval_batch_size(self):
+
     try:
       return int(self.config[self.VALIDATION][self.BATCH_SIZE])
     except:
@@ -334,8 +339,15 @@ class TrainConfigParser(TrainConfig):
     try:
       return int(self.config[self.VALIDATION][self.EVAL_SAMPLES])
     except:
-      return 1000
-      
+      return 100
+
+  def eval_batch_size(self):
+    return 1
+
+  def num_examples_per_epoch(self):
+    return 100
+
+          
   """
   'Number of iterations per TPU training loop'
   """
@@ -434,7 +446,9 @@ class TrainConfigParser(TrainConfig):
     except:
       return 9999
     
-  
+  def num_cores(self):
+    return 1
+    
   #--------------------------------------------------------------
   def dump_all(self):
   
@@ -457,19 +471,19 @@ class TrainConfigParser(TrainConfig):
 
     print("model_dir              {}".format(self.model_dir() ))
 
-    print("checkpoint             {}".format(self.checkpoint() ))
+    print("ckpt                   {}".format(self.ckpt() ))
 
     print("hparams                {}".format(self.hparams() ))
 
-    print("training_mode          {}".format(self.training_mode() ))
+    print("mode                   {}".format(self.mode() ))
 
-    print("training_batch_size    {}".format(self.training_batch_size() ))
+    print("train_batch_size    {}".format(self.train_batch_size() ))
 
-    print("epochs                 {}".format(self.epochs() ))
+    print("num_epochs             {}".format(self.num_epochs() ))
 
     print("save_checkpoints_steps {}".format(self.save_checkpoints_steps() ))
 
-    print("training_file_pattern  {}".format(self.training_file_pattern() ))
+    print("train_file_pattern  {}".format(self.train_file_pattern() ))
 
     print("examples_per_epoch     {}".format(self.examples_per_epoch() ))
 
@@ -481,9 +495,9 @@ class TrainConfigParser(TrainConfig):
 
 
     ####validation
-    print("validation_file_pattern{}".format(self.validation_file_pattern() ))
+    print("val_file_pattern       {}".format(self.val_file_pattern() ))
   
-    print("validation_batch_size  {}".format(self.validation_batch_size() ))
+    print("eval_batch_size        {}".format(self.eval_batch_size() ))
 
     print("eval_samples           {}".format(self.eval_samples() ))
 

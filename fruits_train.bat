@@ -1,0 +1,1 @@
+python main.py --mode=train_and_eval --train_file_pattern=./projects/Fruits/train/Fruits.tfrecord  --val_file_pattern=./projects/Fruits/valid/Fruits.tfrecord --model_name=efficientdet-d0  --model_dir=./projects/Fruits/models --ckpt=efficientdet-d0  --train_batch_size=4 --eval_batch_size=4 --eval_samples=100  --num_examples_per_epoch=100 --num_epochs=100   

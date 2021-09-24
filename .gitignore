@@ -3,6 +3,11 @@ src/*test*.py
 paper
 .pytest_cache
 output
+cocoapi/
+efficientdet-d0/
+projects/BloodCells/models
+projects/BloodCells/models_*
+
 repo
 annotations
 val2017

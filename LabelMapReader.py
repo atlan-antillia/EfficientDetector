@@ -24,7 +24,9 @@ class LabelMapReader:
 
             if id is not None and name is not None:
                 classes.append(name)
-                items[name] = id
+                #items[name] = id 2021/09/20
+                items[id] = name
+
                 id = None
                 name = None
 

@@ -38,12 +38,9 @@ input_rand_hflip: true
 iou_loss_type: null
 iou_loss_weight: 1.0
 is_training_bn: true
-jitter_max: 1.2
-jitter_min: 0.8
-label_map:
-    1:Platelets: null
-    2:RBC: null
-    3:WBC: null
+jitter_max: 2.0
+jitter_min: 0.1
+label_map: null
 label_smoothing: 0.0
 learning_rate: 0.08
 loss_scale: null
@@ -53,6 +50,10 @@ lr_warmup_init: 0.008
 map_freq: 5
 max_instances_per_image: 100
 max_level: 7
+mean_rgb:
+- 123.675
+- 116.28
+- 103.53
 min_level: 3
 mixed_precision: false
 model_optimizations: {}
@@ -67,7 +68,7 @@ nms_configs:
     pyfunc: false
     score_thresh: 0.0
     sigma: null
-num_classes: 3
+num_classes: 90
 num_epochs: 100
 num_scales: 3
 optimizer: sgd
@@ -75,14 +76,22 @@ poly_lr_power: 0.9
 positives_momentum: null
 regenerate_source_id: false
 sample_image: null
+save_freq: epoch
+scale_range: false
 second_lr_drop_epoch: 250.0
 seg_num_classes: 3
 separable_conv: true
 skip_crowd_during_training: true
 skip_mismatch: true
+stddev_rgb:
+- 58.395
+- 57.120000000000005
+- 57.375
 strategy: null
 survival_prob: null
 target_size: null
+tflite_max_detections: 100
 use_keras_model: true
 var_freeze_expr: null
+verbose: 1
 weight_decay: 4.0e-05
