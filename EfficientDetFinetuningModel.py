@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+# Copyright 2020-2021 antillia.com Toshiyuki Arai
+
 """The main training script."""
 
 #2021/09/01 Merged with the google/automl/efficientdet.

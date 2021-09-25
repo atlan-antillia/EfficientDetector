@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+# Copyright 2020-2021 antillia.com Toshiyuki Arai
+
 # 2020/07/31 Based on visualize/vis_utils.py
 # 2020/08/15 Updated to suppoert objects_stats
 # vis_utils2.py

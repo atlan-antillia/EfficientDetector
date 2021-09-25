@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+# Copyright 2020-2021 antillia.com Toshiyuki Arai
+
 # EfficientDetModelInspector.py
 
 

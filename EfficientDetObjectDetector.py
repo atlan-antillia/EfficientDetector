@@ -14,6 +14,8 @@
 # limitations under the License.
 # ==============================================================================
 
+# Copyright 2020-2021 antillia.com Toshiyuki Arai
+
 # 2021/09/22 atlan-antillia
 
 # EfficientDetObjectDetector.py

@@ -1,1 +1,0 @@
-python model_inspect.py --runmode=saved_model --model_name=efficientdet-d0 --ckpt_path=./projects/BloodCells/models  --hparams="image_size=416x416" --saved_model_dir=./projects/BloodCells/saved_model
