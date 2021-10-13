@@ -88,6 +88,7 @@ class TrainConfig:
 
 
   EARLY_STOPPING      = "early_stopping"
+  METRIC              = "metric"
   PATIENCE            = "patience"
    
   EPOCH_CHANGE_MONITOR = "epoch_change_monitor"

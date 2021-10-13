@@ -1,1 +1,0 @@
-python model_inspect.py --runmode=infer --model_name=efficientdet-d0 --ckpt_path= ./efficientdet-d0 --saved_model_dir=./projects/BloodCells/saved_model --min_score_thresh=0.3 --input_image=./images/*.* --output_image_dir=./projects/coco/outputs

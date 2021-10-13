@@ -424,7 +424,13 @@ class TrainConfigParser(TrainConfig):
     except:
       return self.INVALID
 
-  
+  def early_stopping_metric(self):
+    metric = "map"
+    try:   
+      return self.config[self.EARLY_STOPPING][self.METRIC]
+    except:
+      return metric
+
   def epoch_change_notifier_enabled(self):
     try:
       val = self.config[self.EPOCH_CHANGE_NOTIFIER][self.ENABLED]
@@ -512,6 +518,8 @@ class TrainConfigParser(TrainConfig):
     print("eval_timeout           {}".format(self.eval_timeout() ))
 
     print("evaluation_results_file {}".format(self.evaluation_results_file() ))
+
+    print("early_stopping_mode     {}".format(self.early_stopping_mode() ))
 
     print("early_stopping_patience {}".format(self.early_stopping_patience() ))
 

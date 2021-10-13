@@ -17,18 +17,19 @@
 
 import os
 import sys
+from EarlyStopping import EarlyStopping 
 
-class mAPEarlyStopping():
+class mAPEarlyStopping(EarlyStopping):
   def __init__(self, patience=5, verbose=0):
-      self._step    = 0
-      self._mAP     = 0.0
-      self.patience = patience
-      self.verbose  = verbose
-
-  def validate(self, e, mAP):
+      super().__init__(patience, verbose)
+      self._mAP = 0.0
+      
+  #2021/10/13
+  #def validate(self, e, mAP):
+  def validate(self, e, mAP, mAR):
        
       if self._mAP > mAP:
-          #Not increasing mAP
+          #If mAP is not increasing
           self._step += 1
           print("=== mAPEarlyStopping epoch:{} step:{} prev mAP:{} > new mAP: {}".format(e, self._step,   
              round(self._mAP,4),

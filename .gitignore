@@ -7,7 +7,7 @@ cocoapi/
 efficientdet-d0/
 projects/BloodCells/models
 projects/BloodCells/models_*
-
+*.bak
 repo
 annotations
 val2017

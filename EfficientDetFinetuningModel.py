@@ -46,6 +46,8 @@ from io import StringIO
 
 from TrainConfigParser       import TrainConfigParser
 from mAPEarlyStopping        import mAPEarlyStopping
+from FvalueEarlyStopping     import FvalueEarlyStopping
+
 from EvaluationResultsWriter import EvaluationResultsWriter
 from EpochChangeNotifier     import EpochChangeNotifier
 from TrainingLossesWriter    import TrainingLossesWriter
@@ -69,12 +71,17 @@ class EfficientDetFinetuningModel(object):
     evaluation_results_file        = self.parser.evaluation_results_file()
    
     self.evaluation_results_writer = EvaluationResultsWriter(evaluation_results_file)
-    
+    self.early_stopping_metric     = self.parser.early_stopping_metric()
     patience            = self.parser.early_stopping_patience()
-    self.earyl_stopping = None
+    self.early_stopping = None
+    
     if patience > 0:
-      self.early_stopping = mAPEarlyStopping(patience=patience, verbose=1)
-      
+      # 2021/10/13
+      if self.early_stopping_metric == "map":
+        self.early_stopping = mAPEarlyStopping(patience=patience, verbose=1) 
+      elif self.early_stopping_metric == "fvalue":
+        self.early_stopping = FvalueEarlyStopping(patience=patience, verbose=1)
+
  
 
   def train(self):
@@ -372,8 +379,11 @@ class EfficientDetFinetuningModel(object):
 
     breaking_loop_by_earlystopping = False
     if self.early_stopping != None:
-      mAP           = eval_results['AP']
-      breaking_loop_by_earlystopping = self.early_stopping.validate(e, mAP)
+      ap           = eval_results['AP']
+      ar_1         = eval_results['ARmax1']
+      
+      breaking_loop_by_earlystopping = self.early_stopping.validate(e, ap, ar_1)
+      
     return breaking_loop_by_earlystopping
 
 
