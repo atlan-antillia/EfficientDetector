@@ -51,6 +51,8 @@ from FvalueEarlyStopping     import FvalueEarlyStopping
 from EvaluationResultsWriter import EvaluationResultsWriter
 from EpochChangeNotifier     import EpochChangeNotifier
 from TrainingLossesWriter    import TrainingLossesWriter
+from CategorizedAPWriter     import CategorizedAPWriter
+
 
 class EfficientDetFinetuningModel(object):
 
@@ -65,11 +67,19 @@ class EfficientDetFinetuningModel(object):
       os.makedirs(self.model_dir)
    
     training_losses_file           = self.parser.training_losses_file()
+    print("=== training_losses_file{}".format(training_losses_file))
+    self.label_map_pbtxt           = self.parser.label_map_pbtxt()
 
     self.training_losses_writer    = TrainingLossesWriter(training_losses_file)
 
+    categorized_ap_file       = self.parser.categorized_ap_file()    
+    print("=== categorized_ap_file  {}".format(categorized_ap_file ))
+
+    self.categorized_ap_writer     = CategorizedAPWriter(self.label_map_pbtxt, categorized_ap_file)
+    
     evaluation_results_file        = self.parser.evaluation_results_file()
-   
+    print("=== evaluation_results_file {}".format(evaluation_results_file))
+    
     self.evaluation_results_writer = EvaluationResultsWriter(evaluation_results_file)
     self.early_stopping_metric     = self.parser.early_stopping_metric()
     patience            = self.parser.early_stopping_patience()
@@ -109,8 +119,10 @@ class EfficientDetFinetuningModel(object):
     # Parse and override hparams
     config = hparams_config.get_detection_config(self.parser.model_name())
     #hparams="image_size=416x416"
-    config.override(self.parser.hparams())
-    #config.override(hparams)
+    hparams = self.parser.hparams()
+    #2021/11/10 Checking hparams
+    if hparams:
+      config.override(self.parser.hparams())
     if self.parser.num_epochs():  # NOTE: remove this flag after updating all docs.
       config.num_epochs = self.parser.num_epochs()
 
@@ -372,6 +384,9 @@ class EfficientDetFinetuningModel(object):
     self.epoch_change_notifier.epoch_end(e, loss, map)
     
     self.evaluation_results_writer.write(e, eval_results)
+    # 2021/11/10
+    self.categorized_ap_writer.write(e, eval_results)
+
     self.training_losses_writer.write(e, eval_results)
 
     ckpt = tf.train.latest_checkpoint(self.parser.model_dir() )

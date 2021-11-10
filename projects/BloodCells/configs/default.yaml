@@ -1,3 +1,7 @@
-image_size: 416x416
-label_map: {1: Platelets,2: RBC,3: WBC}
+image_size:416x416
+label_map:
+ 1: Platelets
+ 2: RBC
+ 3: WBC
+
 

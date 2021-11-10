@@ -8,6 +8,7 @@ efficientdet-d0/
 projects/BloodCells/models
 projects/BloodCells/models_*
 *.bak
+*.html
 repo
 annotations
 val2017
