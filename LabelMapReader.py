@@ -36,32 +36,6 @@ class LabelMapReader:
   def __init__(self):
     pass
 
-  def xxxxxread(self, label_map_path):
-
-    item_id = None
-    item_name = None
-    items = {}
-    classes = []    
-
-    with open(label_map_path, "r") as file:
-        for line in file:
-            line.replace(" ", "")
-            if line == "item{":
-                pass
-            elif line == "}":
-                pass
-            elif "id" in line:
-                item_id = int(line.split(":", 1)[1].strip())
-            elif "display_name" in line:
-                item_name = line.split(" ")[-1].replace("\"", " ").strip()
-            if item_id is not None and item_name is not None:
-                classes.append(item_name)
-
-                items[item_id] = item_name
-                item_id = None
-                item_name = None
-
-    return items, None
     
   def read(self, label_map_file):
     id    = None
@@ -74,12 +48,10 @@ class LabelMapReader:
             line.replace(" ", "")
             # The following line will cause an error if line contained the line 'name: "Maximum_Width_in_Meters",', 
             # because "id" in "Width".
-            #if "id" in line:
             if "id:" in line:
                 id = int(line.split(":")[1].replace(",", "").strip() )
                 
-            #elif "name" in line:  
-            elif "name:" in line:
+            elif "name:" in line:  
                 name = line.split(":")[1].replace(",", "").strip()
                 name = name.replace("'", "").replace("\"", "")
                 
@@ -98,7 +70,7 @@ class LabelMapReader:
 
 
 if __name__ == "__main__":
-  label_map = "./projects/Japanese_RoadSigns/train/label_map.pbtxt"
+  label_map = "./projects/BloodCells/train/cells_label_map.pbtxt"
 
   try:
      reader = LabelMapReader()
