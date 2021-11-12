@@ -18,7 +18,7 @@
 #******************************************************************************
 # 
 
-2021/11/12 toshiyuki.arai
+#2021/11/12 toshiyuki.arai
 """
   Modified the following line in read metho.
             # The following line will cause an error if line contained the line 'name: "Maximum_Width_in_Meters",', 
