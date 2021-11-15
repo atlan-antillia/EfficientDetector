@@ -25,7 +25,7 @@
             # The following line will cause an error if line contained the line 'name: "Maximum_Width_in_Meters",', 
             # because "id" in "Width".
             #if "id" in line:
-            if "id:" in line:
+            if line.startswith("id:"):
             
 
 """
@@ -74,7 +74,7 @@ class LabelMapReader:
 
 
 if __name__ == "__main__":
-  label_map = "./projects/Japanese_RoadSigns/train/label_map.pbtxt"
+  label_map = "./projects/BloodCells/train/label_map.pbtxt"
 
   try:
      reader = LabelMapReader()
@@ -84,6 +84,3 @@ if __name__ == "__main__":
 
   except Exception as ex:
     traceback.print_exc()
-
-
-
