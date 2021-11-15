@@ -15,6 +15,8 @@
 # 2021/11/14 atlan-antillia
 # CategorizedCOCOeval.py
 
+#  See also: https://github.com/kimyoon-young/centerNet-deep-sort/blob/master/tools/cocoeval.py
+
 import os
 import numpy as np
 import datetime
