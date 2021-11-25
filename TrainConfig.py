@@ -67,13 +67,13 @@ class TrainConfig:
   TF_RANDOM_SEED      = "tf_random_seed"
   USE_FAKE_DATA       = "use_fake_data"
   TRAINING_LOSSES_FILE = "training_losses_file"
- 
+
+  NUM_EXAMPLES_PER_EPOCH = "num_examples_per_epoch" 
 
   VALIDATION          = "validation"
   #FILE_PATTERN       = "file_pattern"
   #BATCH_SIZE         = "batch_size"
   EVAL_SAMPLES        = "eval_samples"
-  #2021/11/14
   EVAL_DIR            = "eval_dir"
   ITERATIONS_PER_LOOP = "iterations_per_loop"
   VAL_JSON_FILE       = "val_json_file"
@@ -81,18 +81,13 @@ class TrainConfig:
   TESTDEV_DIR         = "testdev_dir"
   MIN_EVAL_INTERVAL   = "min_eval_interalval"
   EVAL_TIMEOUT        = "eval_timeout"
-  EVALUATION_RESULTS_FILE   = "evaluation_results_file"
-  # 2021/11/07 Added the followin line.
-  CATEGORIZED_AP_FILE   = "categorized_ap_file"
+  COCO_METRICS_FILE   = "coco_metrics_file"
+  COCO_AP_PER_CLASS_FILE = "coco_ap_per_class_file"
 
-  # 2021/11/15 Disable evaluation of per_class_ap in coco_metric.py
-  DISABLE_PER_CLASS_AP  = "disable_per_class_ap"
   
   EPOCH_CHANGE_NOTIFIER = "epoch_change_notifier"
   
   INVALID             = -1
-
-
 
   EARLY_STOPPING      = "early_stopping"
   METRIC              = "metric"

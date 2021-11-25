@@ -40,7 +40,7 @@ iou_loss_weight: 1.0
 is_training_bn: true
 jitter_max: 2.0
 jitter_min: 0.1
-label_map: ./projects/BloodCells/configs/label_map.yaml
+label_map: null
 label_smoothing: 0.0
 learning_rate: 0.08
 loss_scale: null

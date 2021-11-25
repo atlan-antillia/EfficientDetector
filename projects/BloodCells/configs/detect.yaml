@@ -1,1 +1,6 @@
-label_map: {1: Platelets,2: RBC,3: WBC}
+label_map: { 
+  1: Platelets,
+  2: RBC,
+  3: WBC,
+}
+
