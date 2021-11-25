@@ -116,7 +116,6 @@ class CategorizedCOCOEvaluator(COCOeval):
             num_classes = len(self.label_map)
             print("=== CategorizedCOCOEvaluator.write_categorized_ap_ar_f  num_ids:{} num_classes:{} label_map:{}:  ".format(num_ids,
                 num_classes, self.label_map))
-            print("---- p.cardIds {}".format(p.catIds))
             SEP = ","
             NL  = "\n"
             epoch = 1
@@ -132,14 +131,13 @@ class CategorizedCOCOEvaluator(COCOeval):
 
                 # Enumerate all classes.
                 for i in range(num_classes):
-                    #print("---- i {}".format(i))
                     map = 0.0
                     mar = 0.0
                     f   = 0.0
                     # p.catIds doesn't necessarily contain all classes.
                     if (i+1) in p.catIds:
                         try:
-                            #print("=== i+1 {} found in p.catIds".format(i))
+                            #print("=== {} found in p.catIds".format(i))
                             map = np.mean(ap[:,:,i,:])
                             mar = np.mean(ar[:,i,:])
                             f   = 0.0
@@ -150,10 +148,9 @@ class CategorizedCOCOEvaluator(COCOeval):
                                 f   = round(f,   5)
                         except Exception as ex:
                             print(ex)
-                            pass                    
                     else:
                         print("out of range {} in p.catIds {}".format(i, p.catIds))
-
+                        
                     ap_line = ap_line + str(map) + SEP
                     ar_line = ar_line + str(mar) + SEP
                     f_line  = f_line  + str(f)   + SEP
