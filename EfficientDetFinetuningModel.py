@@ -112,7 +112,7 @@ class EfficientDetFinetuningModel(object):
 
   def train(self):
     # Check data path
-    if self.parser.mode in ('train', 'train_and_eval'):
+    if self.parser.mode() in ('train', 'train_and_eval'):
       if self.parser.train_file_pattern() is None:
         raise RuntimeError('Must specify --train_file_pattern for train.')
     if self.parser.mode() in ('eval', 'train_and_eval'):
